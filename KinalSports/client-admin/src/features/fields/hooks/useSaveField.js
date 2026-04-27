@@ -17,14 +17,11 @@ export const useSaveField = () => {
       formData.append('image', data.photo[0]);
     }
 
-    console.log(formData);
     if (fieldId) {
       await updateField(fieldId, formData);
     } else {
       await createField(formData);
     }
-
-    await createField(formData);
   };
   return { saveField };
 };
