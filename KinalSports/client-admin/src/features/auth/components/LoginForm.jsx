@@ -1,8 +1,7 @@
-import { useForm } from "react-hook-form"
-import { useAuthStore } from "../store/authStore.js";
-import { useNavigate } from "react-router-dom";
-import { toast } from "react-hot-toast";
-
+import { useForm } from 'react-hook-form';
+import { useAuthStore } from '../store/authStore.js';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 
 export const LoginForm = ({ onForgot }) => {
   const navigate = useNavigate();
@@ -19,18 +18,14 @@ export const LoginForm = ({ onForgot }) => {
     const res = await login(data);
     if (res.success) {
       navigate('/dashboard');
-      toast.success("Bienvenido al sistema", { duration: 3000 });
-
+      toast.success('Bienvenido al sistema', { duration: 3000 });
     }
-  }
+  };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+    <form onSubmit={handleSubmit(onSubmit)} className='space-y-5'>
       <div>
-        <label
-          htmlFor='emailOrUsername'
-          className='block text-sm font-medium text-gray-800 mb-1.5'
-        >
+        <label htmlFor='emailOrUsername' className='block text-sm font-medium text-gray-800 mb-1.5'>
           Email o Username
         </label>
 
@@ -39,25 +34,18 @@ export const LoginForm = ({ onForgot }) => {
           id='emailOrUsername'
           placeholder='correo@example.com or username'
           className='w-full px-3 pd-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500'
-          {
-          ...register("emailOrUsername", {
-            required: "Este campo es obligatorio"
-          })
-          }
+          {...register('emailOrUsername', {
+            required: 'Este campo es obligatorio',
+          })}
         />
 
         {errors.emailOrUsername && (
-          <p className="text-red-600 text-xs mt-1">
-            {errors.emailOrUsername.message}
-          </p>
+          <p className='text-red-600 text-xs mt-1'>{errors.emailOrUsername.message}</p>
         )}
       </div>
 
       <div>
-        <label
-          htmlFor='password'
-          className='block text-sm font-medium text-gray-800 mb-1.5'
-        >
+        <label htmlFor='password' className='block text-sm font-medium text-gray-800 mb-1.5'>
           Contraseña
         </label>
 
@@ -66,30 +54,24 @@ export const LoginForm = ({ onForgot }) => {
           id='password'
           placeholder='* * * * * '
           className='w-full px-3 pd-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500'
-          {
-          ...register("password", {
-            required: "Este campo es obligatorio"
-          })
-          }
+          {...register('password', {
+            required: 'Este campo es obligatorio',
+          })}
         />
 
-        {errors.password && (
-          <p className="text-red-600 text-xs mt-1">
-            {errors.password.message}
-          </p>
-        )}
+        {errors.password && <p className='text-red-600 text-xs mt-1'>{errors.password.message}</p>}
       </div>
 
-      {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+      {error && <p className='text-red-600 text-sm text-center'>{error}</p>}
 
       <button
         type='submit'
         disabled={loading}
         className='w-full bg-main-blue hover:opacity-90 text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 text-sm'
       >
-        {loading ? "Iniciando..." : "Iniciar Sesion"}
+        {loading ? 'Iniciando...' : 'Iniciar Sesion'}
       </button>
-      <p className="text-center text-sm">
+      <p className='text-center text-sm'>
         <button
           type='button'
           onClick={onForgot}
@@ -99,5 +81,5 @@ export const LoginForm = ({ onForgot }) => {
         </button>
       </p>
     </form>
-  )
-}
+  );
+};
