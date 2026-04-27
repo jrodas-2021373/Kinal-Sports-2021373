@@ -12,6 +12,7 @@ public class ApplicationDbContext (DbContextOptions<ApplicationDbContext> option
     public DbSet<UserProfile> UserProfiles {get; set;}
     public DbSet<UserEmail> UserEmails {get; set;}
     public DbSet<UserPasswordReset> UserPasswordResets {get; set;}
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     public static string ToSnakeCase(string input)
     {
@@ -186,6 +187,31 @@ public class ApplicationDbContext (DbContextOptions<ApplicationDbContext> option
             entity.Property(e => e.UserId)
                 .HasMaxLength(16);
             entity.Property(e => e.PasswordResetToken).HasMaxLength(256);
+        });
+
+        // Configuración de RefreshToken
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TokenHash)
+                .IsRequired()
+                .HasMaxLength(64);
+            entity.Property(e => e.UserId)
+                .IsRequired()
+                .HasMaxLength(16);
+            entity.Property(e => e.CreatedAt)
+                .IsRequired();
+            entity.Property(e => e.ExpiresAt)
+                .IsRequired();
+
+            entity.HasIndex(e => e.TokenHash)
+                .IsUnique();
+            entity.HasIndex(e => e.FamilyId);
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 

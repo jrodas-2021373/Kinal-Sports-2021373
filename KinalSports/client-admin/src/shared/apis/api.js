@@ -18,6 +18,16 @@ const axiosAdmin = axios.create({
     }
 });
 
+//Interceptores para adjuntar token a peticiones
+axiosAuth.interceptors.request.use((config) => {
+  config._axiosClient = "auth";
+  const token = useAuthStore.getState().token;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 axiosAdmin.interceptors.request.use((config) => {
     config._axiosClient = "admin";
     const token = useAuthStore.getState().token;

@@ -2,6 +2,7 @@ using AuthService.Api.Extensions;
 using AuthService.Api.Middlewares;
 using AuthService.Api.ModelBinders;
 using AuthService.Persistence.Data;
+using Microsoft.EntityFrameworkCore;
 using NetEscapades.AspNetCore.SecurityHeaders.Infrastructure;
 using Serilog;
 using Microsoft.AspNetCore.Hosting.Server;
@@ -9,7 +10,7 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// CORRECCIÓN: Omitir validación SSL (Cloudinary, etc.)
+// FIX: Bypass SSL (Cloudinary, etc.)
 System.Net.ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) => true;
 
 // Configure Serilog from appsettings.json only (avoid duplicate sinks)
@@ -21,12 +22,12 @@ builder.Host.UseSerilog((context, services, loggerConfiguration) =>
 // Add services to the container
 builder.Services.AddControllers(options =>
 {
-    // Agregar el enlazador de modelos para IFileData
+    // Agregar el model binder para IFileData
     options.ModelBinderProviders.Insert(0, new FileDataModelBinderProvider());
 })
 .AddJsonOptions(o =>
 {
-    // Estandarizar respuestas en camelCase para coincidir con auth-node
+    // Estandarizar las respuestas en camelCase para coincidir con auth-node
     o.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
 });
 
@@ -76,11 +77,11 @@ app.UseSecurityHeaders(policies => policies
     .AddCustomHeader("Cache-Control", "no-store, no-cache, must-revalidate, private")
 );
 
-// Manejo global de excepciones
+// Global exception handling
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
-// Middlewares principales
-app.UseHttpsRedirection();
+// Core middlewares
+// app.UseHttpsRedirection();
 app.UseCors("DefaultCorsPolicy");
 app.UseRateLimiter();
 app.UseAuthentication();
@@ -88,7 +89,24 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Log de inicio: direcciones y endpoint de salud
+// Health check endpoints - both versions for compatibility
+// Standard health check endpoint
+app.MapHealthChecks("/health");
+
+// Custom health endpoint to match Node.js response format
+app.MapGet("/health", () =>
+{
+    var response = new
+    {
+        status = "Healthy",
+        timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+    };
+    return Results.Ok(response);
+});
+
+app.MapHealthChecks("/api/v1/health");
+
+// Startup log: addresses and health endpoint
 var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();
 app.Lifetime.ApplicationStarted.Register(() =>
 {
@@ -102,22 +120,22 @@ app.Lifetime.ApplicationStarted.Register(() =>
         {
             foreach (var addr in addresses)
             {
-                var health = $"{addr.TrimEnd('/')}/api/v1/health";
-                startupLogger.LogInformation("API de AuthService está ejecutándose en {Url}. Endpoint de salud: {HealthUrl}", addr, health);
+                var health = $"{addr.TrimEnd('/')}/health";
+                startupLogger.LogInformation("AuthService API is running at {Url}. Health endpoint: {HealthUrl}", addr, health);
             }
         }
         else
         {
-            startupLogger.LogInformation("API de AuthService iniciada. Endpoint de salud: /api/v1/health");
+            startupLogger.LogInformation("AuthService API started. Health endpoint: /health");
         }
     }
     catch (Exception ex)
     {
-        startupLogger.LogWarning(ex, "Fallo al determinar las direcciones de escucha para el log de inicio");
+        startupLogger.LogWarning(ex, "Failed to determine the listening addresses for startup log");
     }
 });
 
-// Inicializar base de datos y datos semilla
+// Initialize database and seed data
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -125,20 +143,38 @@ using (var scope = app.Services.CreateScope())
 
     try
     {
-        logger.LogInformation("Verificando conexión a la base de datos...");
+        logger.LogInformation("Checking database connection...");
 
-        // Garantizar que la base de datos se crea (similar a Sequelize sync en Node.js)
+        // Ensure database is created (similar to Sequelize sync in Node.js)
         await context.Database.EnsureCreatedAsync();
 
-        logger.LogInformation("Base de datos lista. Ejecutando datos semilla...");
+        // Ensure schema updates for environments already initialized with EnsureCreated
+        await context.Database.ExecuteSqlRawAsync(@"
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+        id uuid NOT NULL,
+        token_hash character varying(64) NOT NULL,
+        user_id character varying(16) NOT NULL,
+        family_id uuid NOT NULL,
+        expires_at timestamp with time zone NOT NULL,
+        revoked_at timestamp with time zone NULL,
+        created_at timestamp with time zone NOT NULL,
+        CONSTRAINT pk_refresh_tokens PRIMARY KEY (id),
+        CONSTRAINT fk_refresh_tokens_users_user_id FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS ix_refresh_tokens_token_hash ON refresh_tokens (token_hash);
+    CREATE INDEX IF NOT EXISTS ix_refresh_tokens_family_id ON refresh_tokens (family_id);
+    ");
+
+        logger.LogInformation("Database ready. Running seed data...");
         await DataSeeder.SeedAsync(context);
 
-        logger.LogInformation("Inicialización de base de datos completada exitosamente");
+        logger.LogInformation("Database initialization completed successfully");
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "Ocurrió un error al inicializar la base de datos");
-        throw; // Relanzar para detener la aplicación
+        logger.LogError(ex, "An error occurred while initializing the database");
+        throw; // Re-throw to stop the application
     }
 }
 
