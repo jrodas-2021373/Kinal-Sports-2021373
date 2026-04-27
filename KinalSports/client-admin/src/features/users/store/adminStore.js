@@ -34,7 +34,7 @@ export const useFieldsStore = create((set, get) => ({
       const response = await createFieldRequest(formData);
 
       set({
-        fields: [response.data.data, ...get().Fields()],
+        fields: [response.data.data, ...get().fields],
         loading: false,
       });
     } catch (err) {
@@ -50,7 +50,7 @@ export const useFieldsStore = create((set, get) => ({
       set({ loading: true, error: null });
       const response = await updateFieldRequest(id, formData);
       set({
-        fields: get().fields.map((fieldId) => (field._id === id ? response.data.data : field)),
+        fields: get().fields.map((field) => (field._id === id ? response.data.data : field)),
         loading: false,
       });
     } catch (err) {
@@ -66,7 +66,7 @@ export const useFieldsStore = create((set, get) => ({
       set({ loading: true, error: null });
       await deleteFieldRequest(id);
       set({
-        fields: get().filter((field) => field._id !== id),
+        fields: get().fields.filter((field) => field._id !== id),
         loading: false,
       });
     } catch (err) {

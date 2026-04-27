@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useFieldsStore } from '../../users/store/adminStore';
 import { Spinner } from '../../auth/components/Spinner.jsx';
 import { useSaveField } from '../../fields/hooks/useSaveField';
-import { showSuccess, showError } from '../../../shared/utils/toast.js';
+import { showSuccess } from '../../../shared/utils/toast.js';
 
 export const FieldModal = ({ isOpen, onClose, field }) => {
   const {
@@ -63,7 +63,7 @@ export const FieldModal = ({ isOpen, onClose, field }) => {
       setPreview(null);
       onClose();
     } catch {
-      showError('Error al guardar el campo');
+      // El mensaje de error se maneja desde el store para evitar toasts duplicados.
     }
   };
 
