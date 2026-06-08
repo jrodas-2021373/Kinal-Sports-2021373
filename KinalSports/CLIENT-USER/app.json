@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "client-user",
+    "slug": "client-user",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#08316D"
+    },
+    "ios": {
+      "supportsTabletMode": true,
+      "bundleIdentifier": "com.kinalsports.client"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#08316D"
+      },
+      "package": "com.kinalsports.client"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    }
+  }
+}
